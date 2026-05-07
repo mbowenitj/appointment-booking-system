@@ -9,7 +9,7 @@ export default function App() {
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md">
             <HiCalendar className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight">Bookpulse</span>
+          <span className="text-xl font-bold text-gray-900 tracking-tight">Book Easy</span>
           <span className="hidden sm:block text-sm text-gray-400 ml-2 font-medium">
             Branch Appointment Booking
           </span>
@@ -27,7 +27,7 @@ export default function App() {
       </main>
 
       <footer className="text-center text-xs text-gray-400 py-8">
-        © {new Date().getFullYear()} Bookpulse. All rights reserved.
+        © {new Date().getFullYear()} BookEasy. All rights reserved.
       </footer>
     </div>
   );

@@ -1,4 +1,4 @@
-# AppointEase — Branch Appointment Booking
+# BookEasy — Branch Appointment Booking
 
 Book branch appointments in a few clicks. Select a branch, pick a date and time slot, fill in your details, and get a confirmation email.
 
@@ -66,9 +66,9 @@ Base URL: `http://localhost:3001/api`
   "branchId": "1",
   "date": "2026-06-15",
   "timeSlot": "10:00",
-  "customerName": "Jane Doe",
-  "customerEmail": "jane@example.com",
-  "customerPhone": "0781234567"
+  "customerName": "Tshepo Ninja",
+  "customerEmail": "tshepo@example.com",
+  "customerPhone": "0667778888"
 }
 ```
 

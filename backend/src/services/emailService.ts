@@ -52,7 +52,7 @@ export async function sendConfirmationEmail(params: SendEmailParams): Promise<Em
     const transport = await getTransporter();
 
     const info = await transport.sendMail({
-      from: '"Bookpulse" <noreply@bookpulse.com>',
+      from: '"BookEasy" <noreply@bookeasy.com>',
       to,
       subject: `✅ Appointment Confirmed - ${formattedDate} at ${displayTime}`,
       html: `
