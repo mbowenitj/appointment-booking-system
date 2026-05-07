@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: bookpulse-api
+    runtime: node
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: CORS_ORIGIN
+        sync: false   # set this to your Netlify URL after first deploy
+      - key: DB_DIR
+        value: /data
+    disk:
+      name: db-data
+      mountPath: /data
+      sizeGB: 1
