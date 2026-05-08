@@ -84,6 +84,31 @@ Base URL: `http://localhost:3001/api`
 
 ---
 
+## Testing
+
+```bash
+# Backend (23 tests — store unit tests + route integration tests)
+cd backend
+npm test
+
+# Frontend (12 tests — StepTimeSlot component)
+cd frontend
+npm test
+```
+
+| Suite | File | Tests |
+|-------|------|-------|
+| Store unit tests | `backend/src/__tests__/store.test.ts` | 11 |
+| Route integration tests | `backend/src/__tests__/routes.test.ts` | 12 |
+| StepTimeSlot component | `frontend/src/__tests__/StepTimeSlot.test.tsx` | 12 |
+
+**Coverage:**
+- `getBranches`, `getBranchById`, `getAvailableSlots`, `createBooking`, `cancelBooking`
+- All API routes — validation, success, conflict (409), not-found (404)
+- Time formatting, slot availability, past-slot filtering, loading state
+
+---
+
 ## Stack
 
 - **Frontend** — React 18, Vite, TypeScript, Tailwind CSS
@@ -91,4 +116,5 @@ Base URL: `http://localhost:3001/api`
 - **Database** — PostgreSQL 16 (connection pooling via `pg`, unique constraint prevents double-booking)
 - **Email** — Simulated via [Ethereal Mail](https://ethereal.email/) — click the preview link after booking
 - **Container** — Docker + nginx
+- **Tests** — Vitest, Supertest, Testing Library (35 tests total)
 
