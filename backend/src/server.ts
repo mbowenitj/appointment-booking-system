@@ -12,20 +12,13 @@ import { initializeDatabase } from './db/database';
 
 const app = express();
 
-// ── Security headers
 app.use(helmet());
-
-// ── HTTP request logging 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ── CORS 
 const allowedOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
 app.use(cors({ origin: allowedOrigin }));
-
-// ── Body parsing (16 kb limit to restrict oversized payloads)
 app.use(express.json({ limit: '16kb' }));
 
-// ── Routes
 app.use('/api/branches', branchesRouter);
 app.use('/api/slots',    slotsRouter);
 app.use('/api/bookings', bookingsRouter);
@@ -39,10 +32,8 @@ app.use('/api/*', (_req, res) => {
   res.status(404).json({ error: 'Not found.' });
 });
 
-// ── Global error handler
 app.use(errorHandler);
 
-// ── Start server (only after DB schema + seed are ready)
 const PORT = Number(process.env.PORT ?? 3001);
 
 async function start(): Promise<void> {
@@ -53,7 +44,6 @@ async function start(): Promise<void> {
     console.log(`\n BookEasy backend [${env}] → http://localhost:${PORT}\n`);
   });
 
-  // ── Graceful shutdown
   function shutdown(signal: string): void {
     console.log(`\n${signal} received — shutting down gracefully…`);
     server.close(() => {

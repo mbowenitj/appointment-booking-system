@@ -1,4 +1,4 @@
-# ── Build stage ────────────────────────────────────────────────────────────
+# Build stage
 FROM node:22-alpine AS builder
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY index.html postcss.config.js tailwind.config.js ./
 COPY src ./src
 RUN npm run build
 
-# ── Production stage — nginx to serve static files ─────────────────────────
+# Production stage
 FROM nginx:1.25-alpine AS runner
 
 COPY --from=builder /app/dist           /usr/share/nginx/html

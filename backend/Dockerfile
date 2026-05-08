@@ -1,4 +1,4 @@
-# ── Build stage ────────────────────────────────────────────────────────────
+# Build stage
 FROM node:22-alpine AS builder
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN npm run build
 # Remove dev dependencies after build
 RUN npm prune --omit=dev
 
-# ── Production stage ───────────────────────────────────────────────────────
+# Production stage
 FROM node:22-alpine AS runner
 WORKDIR /app
 

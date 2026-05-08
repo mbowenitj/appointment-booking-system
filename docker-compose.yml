@@ -1,6 +1,5 @@
 services:
-  # ── PostgreSQL database ────────────────────────────────────────────────────
-  postgres:
+  # PostgreSQL database
     image: postgres:16-alpine
     container_name: bookeasy-postgres
     restart: unless-stopped
@@ -20,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Backend (Node.js + Express + PostgreSQL) ───────────────────────────────
+  # Backend
   backend:
     build:
       context: ./backend
@@ -45,7 +44,7 @@ services:
       retries: 3
       start_period: 20s
 
-  # ── Frontend (React/Vite built → nginx) ───────────────────────────────────
+  # Frontend
   frontend:
     build:
       context: ./frontend
