@@ -25,6 +25,12 @@ export default function StepTimeSlot({ slots, selected, onSelect, loading, branc
       })
     : '';
 
+  // For today, compute the cutoff so past slots render as unavailable immediately
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const isToday = date === todayStr;
+
   if (loading) {
     return (
       <div>
@@ -38,7 +44,14 @@ export default function StepTimeSlot({ slots, selected, onSelect, loading, branc
     );
   }
 
-  const availableCount = slots.filter((s) => s.available).length;
+  const availableCount = slots.filter(({ time, available }) => {
+    if (!available) return false;
+    if (isToday) {
+      const [h, m] = time.split(':').map(Number);
+      return h * 60 + m > nowMinutes;
+    }
+    return true;
+  }).length;
 
   return (
     <div>
@@ -71,13 +84,19 @@ export default function StepTimeSlot({ slots, selected, onSelect, loading, branc
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
         {slots.map(({ time, available }) => {
           const isSelected = selected === time;
+          // Also disable on the client-side if the slot time has already passed today
+          const isPast = isToday && (() => {
+            const [h, m] = time.split(':').map(Number);
+            return h * 60 + m <= nowMinutes;
+          })();
+          const isAvailable = available && !isPast;
           return (
             <button
               key={time}
-              disabled={!available}
-              onClick={() => available && onSelect(time)}
+              disabled={!isAvailable}
+              onClick={() => isAvailable && onSelect(time)}
               className={`slot-btn ${
-                isSelected ? 'slot-selected' : available ? 'slot-available' : 'slot-booked'
+                isSelected ? 'slot-selected' : isAvailable ? 'slot-available' : 'slot-booked'
               }`}
             >
               {formatTime(time)}
