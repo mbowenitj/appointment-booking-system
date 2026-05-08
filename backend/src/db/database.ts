@@ -1,69 +1,72 @@
-import { DatabaseSync } from 'node:sqlite';
-import path from 'path';
-import fs from 'fs';
+import { Pool } from 'pg';
 
-// In Docker the DB_DIR env var is set to a mounted volume (/data).
-// In local dev it defaults to a 'data' directory inside the backend folder.
-const DB_DIR  = process.env.DB_DIR ?? path.join(process.cwd(), 'data');
-const DB_PATH = path.join(DB_DIR, 'appointments.db');
-
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
 }
 
-const db = new DatabaseSync(DB_PATH);
+// Connection pool — handles concurrent requests properly.
+// max: 10 connections is a safe default for a single backend instance.
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // In production (Render, Heroku, etc.) SSL is required.
+  // rejectUnauthorized: false accepts self-signed certs from managed PG providers.
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : false,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
+});
 
-// WAL mode: allows concurrent reads while a write is in progress
-db.exec('PRAGMA journal_mode = WAL');
-// Enforce foreign-key constraints
-db.exec('PRAGMA foreign_keys = ON');
+const BRANCHES = [
+  { id: '1', name: 'Cape Town City Centre Branch', address: '1 Adderley Street, Cape Town City Centre', phone: '(021) 001-1000' },
+  { id: '2', name: 'Sea Point Branch',             address: '145 Main Road, Sea Point, Cape Town',       phone: '(021) 002-2000' },
+  { id: '3', name: 'Claremont Branch',             address: '32 Vineyard Road, Claremont, Cape Town',    phone: '(021) 003-3000' },
+  { id: '4', name: 'Tyger Valley Branch',          address: 'Willie van Schoor Ave, Bellville',          phone: '(021) 004-4000' },
+] as const;
 
-// Schema 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS branches (
-    id      TEXT PRIMARY KEY,
-    name    TEXT NOT NULL,
-    address TEXT NOT NULL,
-    phone   TEXT NOT NULL
-  );
+// Called once at server startup: creates schema + seeds branches.
+export async function initializeDatabase(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS branches (
+      id      TEXT PRIMARY KEY,
+      name    TEXT NOT NULL,
+      address TEXT NOT NULL,
+      phone   TEXT NOT NULL
+    );
 
-  CREATE TABLE IF NOT EXISTS bookings (
-    id             TEXT PRIMARY KEY,
-    branch_id      TEXT NOT NULL REFERENCES branches(id),
-    date           TEXT NOT NULL,
-    time_slot      TEXT NOT NULL,
-    customer_name  TEXT NOT NULL,
-    customer_email TEXT NOT NULL,
-    customer_phone TEXT NOT NULL DEFAULT '',
-    status         TEXT NOT NULL DEFAULT 'confirmed',
-    created_at     TEXT NOT NULL,
-    -- Database-level unique constraint prevents double-booking
-    -- even under concurrent requests
-    UNIQUE (branch_id, date, time_slot)
-  );
+    CREATE TABLE IF NOT EXISTS bookings (
+      id             TEXT PRIMARY KEY,
+      branch_id      TEXT NOT NULL REFERENCES branches(id),
+      date           DATE NOT NULL,
+      time_slot      TEXT NOT NULL,
+      customer_name  TEXT NOT NULL,
+      customer_email TEXT NOT NULL,
+      customer_phone TEXT NOT NULL DEFAULT '',
+      status         TEXT NOT NULL DEFAULT 'confirmed',
+      created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      -- Prevents double-booking at the database level, even under concurrent requests
+      UNIQUE (branch_id, date, time_slot)
+    );
 
-  CREATE INDEX IF NOT EXISTS idx_bookings_branch_date
-    ON bookings (branch_id, date);
-`);
+    CREATE INDEX IF NOT EXISTS idx_bookings_branch_date
+      ON bookings (branch_id, date);
+  `);
 
-// Upsert branches (runs on every startup to keep names current) 
-const upsert = db.prepare(
-  'INSERT OR REPLACE INTO branches (id, name, address, phone) VALUES ($id, $name, $address, $phone)',
-);
+  // Upsert branches — keeps names/addresses current on every restart
+  for (const b of BRANCHES) {
+    await pool.query(
+      `INSERT INTO branches (id, name, address, phone)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (id) DO UPDATE
+         SET name    = EXCLUDED.name,
+             address = EXCLUDED.address,
+             phone   = EXCLUDED.phone`,
+      [b.id, b.name, b.address, b.phone],
+    );
+  }
 
-db.exec('BEGIN');
-try {
-  upsert.run({ id: '1', name: 'Cape Town City Centre Branch', address: '1 Adderley Street, Cape Town City Centre', phone: '(021) 001-1000' });
-  upsert.run({ id: '2', name: 'Sea Point Branch',             address: '145 Main Road, Sea Point, Cape Town',       phone: '(021) 002-2000' });
-  upsert.run({ id: '3', name: 'Claremont Branch',             address: '32 Vineyard Road, Claremont, Cape Town',    phone: '(021) 003-3000' });
-  upsert.run({ id: '4', name: 'Tyger Valley Branch',          address: 'Willie van Schoor Ave, Bellville',          phone: '(021) 004-4000' });
-  db.exec('COMMIT');
-  console.log('🌱  Branches synced (Cape Town).');
-} catch (err) {
-  db.exec('ROLLBACK');
-  throw err;
+  console.log('  Branches synced (Cape Town).');
 }
 
-console.log(`SQLite database → ${DB_PATH}`);
-
-export default db;
+export default pool;

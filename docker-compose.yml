@@ -1,21 +1,41 @@
 services:
-  # ── Backend (Node.js + Express + SQLite) ──────────────────────────────────
+  # ── PostgreSQL database ────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: bookpulse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       bookpulse
+      POSTGRES_USER:     bookpulse
+      POSTGRES_PASSWORD: bookpulse_secret
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookpulse -d bookpulse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend (Node.js + Express + PostgreSQL) ───────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: appointease-backend
+    container_name: bookpulse-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: production
-      PORT: 3001
-      DB_DIR: /data
+      NODE_ENV:     production
+      PORT:         3001
+      DATABASE_URL: postgresql://bookpulse:bookpulse_secret@postgres:5432/bookpulse
       # To restrict CORS to your actual domain, set this:
       # CORS_ORIGIN: https://yourdomain.com
-    volumes:
-      - db_data:/data        # Persist the SQLite file across restarts
     expose:
-      - "3001"               # Internal only — nginx proxies to it
+      - "3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
       interval: 30s
@@ -28,14 +48,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: appointease-frontend
+    container_name: bookpulse-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"            # App is available at http://localhost:3000
+      - "3000:80"
     depends_on:
       backend:
         condition: service_healthy
 
 volumes:
-  db_data:
+  pg_data:
     driver: local

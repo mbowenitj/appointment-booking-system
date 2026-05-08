@@ -19,8 +19,8 @@ const bookingLimiter = rateLimit({
 });
 
 // GET /api/bookings
-router.get('/', (_req: Request, res: Response) => {
-  res.json(getAllBookings());
+router.get('/', async (_req: Request, res: Response) => {
+  res.json(await getAllBookings());
 });
 
 // POST /api/bookings
@@ -52,13 +52,13 @@ router.post('/', bookingLimiter, async (req: Request, res: Response) => {
     return;
   }
 
-  const branch = getBranchById(branchId);
+  const branch = await getBranchById(branchId);
   if (!branch) {
     res.status(404).json({ error: 'Branch not found.' });
     return;
   }
 
-  const result = createBooking({
+  const result = await createBooking({
     branchId,
     date,
     timeSlot,
@@ -86,13 +86,13 @@ router.post('/', bookingLimiter, async (req: Request, res: Response) => {
 });
 
 // DELETE /api/bookings/:id
-router.delete('/:id', (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   if (!UUID_REGEX.test(id)) {
     res.status(400).json({ error: 'Invalid booking ID.' });
     return;
   }
-  if (!cancelBooking(id)) {
+  if (!await cancelBooking(id)) {
     res.status(404).json({ error: 'Booking not found.' });
     return;
   }

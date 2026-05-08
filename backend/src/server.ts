@@ -7,6 +7,7 @@ import branchesRouter from './routes/branches';
 import slotsRouter    from './routes/slots';
 import bookingsRouter from './routes/bookings';
 import { errorHandler } from './middleware/errorHandler';
+import { initializeDatabase } from './db/database';
 
 const app = express();
 
@@ -40,24 +41,33 @@ app.use('/api/*', (_req, res) => {
 // ── Global error handler
 app.use(errorHandler);
 
-// ── Start server 
+// ── Start server (only after DB schema + seed are ready)
 const PORT = Number(process.env.PORT ?? 3001);
-const server = app.listen(PORT, () => {
-  const env = process.env.NODE_ENV ?? 'development';
-  console.log(`\n AppointEase backend [${env}] → http://localhost:${PORT}\n`);
-});
 
-// ── Graceful shutdown
-function shutdown(signal: string): void {
-  console.log(`\n${signal} received — shutting down gracefully…`);
-  server.close(() => {
-    console.log('HTTP server closed.');
-    process.exit(0);
+async function start(): Promise<void> {
+  await initializeDatabase();
+
+  const server = app.listen(PORT, () => {
+    const env = process.env.NODE_ENV ?? 'development';
+    console.log(`\n Bookpulse backend [${env}] → http://localhost:${PORT}\n`);
   });
-  // Force-exit after 10 s to avoid hanging on stuck requests
-  setTimeout(() => process.exit(1), 10_000).unref();
+
+  // ── Graceful shutdown
+  function shutdown(signal: string): void {
+    console.log(`\n${signal} received — shutting down gracefully…`);
+    server.close(() => {
+      console.log('HTTP server closed.');
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(1), 10_000).unref();
+  }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT',  () => shutdown('SIGINT'));
 }
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT',  () => shutdown('SIGINT'));
+start().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
 

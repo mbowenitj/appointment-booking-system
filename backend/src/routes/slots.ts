@@ -5,7 +5,7 @@ const router = Router();
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 // GET /api/slots?branchId=&date=
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   const { branchId, date } = req.query as Record<string, string | undefined>;
 
   if (!branchId || !date) {
@@ -24,12 +24,12 @@ router.get('/', (req: Request, res: Response) => {
     return;
   }
 
-  if (!getBranchById(branchId)) {
+  if (!await getBranchById(branchId)) {
     res.status(404).json({ error: 'Branch not found.' });
     return;
   }
 
-  res.json(getAvailableSlots(branchId, date));
+  res.json(await getAvailableSlots(branchId, date));
 });
 
 export default router;

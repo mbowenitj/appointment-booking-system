@@ -26,7 +26,17 @@ docker compose down
 
 ### Option B — Local development
 
-> Requires Node.js 22+
+> Requires Node.js 22+ and a running PostgreSQL instance.
+
+**Set up the database**
+```bash
+# Create the database (once)
+psql -U postgres -c "CREATE DATABASE bookpulse;"
+
+# Copy and fill in the env file
+cp backend/.env.example backend/.env
+# Edit backend/.env and set DATABASE_URL
+```
 
 **Terminal 1 — Backend**
 ```bash
@@ -78,7 +88,7 @@ Base URL: `http://localhost:3001/api`
 
 - **Frontend** — React 18, Vite, TypeScript, Tailwind CSS
 - **Backend** — Node.js 22, Express, TypeScript
-- **Database** — SQLite (`node:sqlite`, persisted to `backend/data/appointments.db`)
+- **Database** — PostgreSQL 16 (connection pooling via `pg`, unique constraint prevents double-booking)
 - **Email** — Simulated via [Ethereal Mail](https://ethereal.email/) — click the preview link after booking
 - **Container** — Docker + nginx
 

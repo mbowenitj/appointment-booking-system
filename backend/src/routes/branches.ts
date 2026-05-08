@@ -4,8 +4,8 @@ import { getBranches } from '../data/store';
 const router = Router();
 
 // GET /api/branches
-router.get('/', (_req, res) => {
-  res.json(getBranches());
+router.get('/', async (_req, res) => {
+  res.json(await getBranches());
 });
 
 export default router;
