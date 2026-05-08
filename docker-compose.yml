@@ -2,18 +2,20 @@ services:
   # ── PostgreSQL database ────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: bookpulse-postgres
+    container_name: bookeasy-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       bookpulse
-      POSTGRES_USER:     bookpulse
-      POSTGRES_PASSWORD: bookpulse_secret
+      POSTGRES_DB:       bookeasy
+      POSTGRES_USER:     bookeasy
+      POSTGRES_PASSWORD: bookeasy_secret
     volumes:
       - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bookpulse -d bookpulse"]
+      test: ["CMD-SHELL", "pg_isready -U bookeasy -d bookeasy"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,12 +25,12 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: bookpulse-backend
+    container_name: bookeasy-backend
     restart: unless-stopped
     environment:
       NODE_ENV:     production
       PORT:         3001
-      DATABASE_URL: postgresql://bookpulse:bookpulse_secret@postgres:5432/bookpulse
+      DATABASE_URL: postgresql://bookeasy:bookeasy_secret@postgres:5432/bookeasy
       # To restrict CORS to your actual domain, set this:
       # CORS_ORIGIN: https://yourdomain.com
     expose:
@@ -48,7 +50,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: bookpulse-frontend
+    container_name: bookeasy-frontend
     restart: unless-stopped
     ports:
       - "3000:80"

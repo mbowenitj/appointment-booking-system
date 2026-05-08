@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -49,7 +50,7 @@ async function start(): Promise<void> {
 
   const server = app.listen(PORT, () => {
     const env = process.env.NODE_ENV ?? 'development';
-    console.log(`\n Bookpulse backend [${env}] → http://localhost:${PORT}\n`);
+    console.log(`\n BookEasy backend [${env}] → http://localhost:${PORT}\n`);
   });
 
   // ── Graceful shutdown

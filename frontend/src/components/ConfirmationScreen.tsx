@@ -71,7 +71,6 @@ export default function ConfirmationScreen({ booking, onBookAnother }: Props) {
             View Confirmation Email
             <HiExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
           </a>
-          {/* <p className="text-xs text-indigo-400 mt-1">Opens Ethereal Mail – a free email testing service</p> */}
         </div>
       )}
 

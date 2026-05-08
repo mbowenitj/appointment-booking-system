@@ -8,9 +8,9 @@ if (!process.env.DATABASE_URL) {
 // max: 10 connections is a safe default for a single backend instance.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // In production (Render, Heroku, etc.) SSL is required.
-  // rejectUnauthorized: false accepts self-signed certs from managed PG providers.
-  ssl: process.env.NODE_ENV === 'production'
+  // SSL is only needed when connecting to managed cloud providers (Render, Supabase etc.)
+  // that explicitly require it. The internal Docker postgres does not use SSL.
+  ssl: process.env.DB_SSL === 'true'
     ? { rejectUnauthorized: false }
     : false,
   max: 10,

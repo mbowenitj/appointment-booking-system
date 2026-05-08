@@ -31,7 +31,7 @@ docker compose down
 **Set up the database**
 ```bash
 # Create the database (once)
-psql -U postgres -c "CREATE DATABASE bookpulse;"
+psql -U postgres -c "CREATE DATABASE bookeasy;"
 
 # Copy and fill in the env file
 cp backend/.env.example backend/.env
