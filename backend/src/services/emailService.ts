@@ -6,15 +6,30 @@ let transporter: nodemailer.Transporter | null = null;
 async function getTransporter(): Promise<nodemailer.Transporter> {
   if (transporter) return transporter;
 
-  const testAccount = await nodemailer.createTestAccount();
-  transporter = nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false,
-    auth: { user: testAccount.user, pass: testAccount.pass },
-  });
+  // Production: use SMTP credentials supplied via environment variables.
+  // Development / demo: fall back to a free Ethereal catch-all account.
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
 
-  console.log(`📧  Ethereal test account: ${testAccount.user}`);
+  // Use real SMTP in production; fall back to Ethereal for local dev
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT ? Number(SMTP_PORT) : 587,
+      secure: SMTP_SECURE === 'true',
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+    });
+    console.log(`📧  SMTP transport configured → ${SMTP_HOST}`);
+  } else {
+    const testAccount = await nodemailer.createTestAccount();
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: { user: testAccount.user, pass: testAccount.pass },
+    });
+    console.log(`📧  Ethereal test account (dev only): ${testAccount.user}`);
+  }
+
   return transporter;
 }
 
@@ -99,8 +114,10 @@ export async function sendConfirmationEmail(params: SendEmailParams): Promise<Em
       `,
     });
 
-    const previewUrl = nodemailer.getTestMessageUrl(info) || null;
-    console.log(`📧  Confirmation email sent → ${previewUrl}`);
+    const previewUrl = process.env.SMTP_HOST
+      ? null
+      : (nodemailer.getTestMessageUrl(info) || null);
+    if (previewUrl) console.log(`📧  Email preview → ${previewUrl}`);
     return { success: true, previewUrl };
   } catch (err) {
     console.error('⚠️  Email send failed:', (err as Error).message);

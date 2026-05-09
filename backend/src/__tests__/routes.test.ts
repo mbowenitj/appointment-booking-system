@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 
+// Set a fixed admin key before importing the app so the middleware is configured
+process.env.ADMIN_API_KEY = 'test-admin-key';
+
 // Mock store and email
 vi.mock('../data/store', () => ({
   getBranches:      vi.fn(),
@@ -35,6 +38,22 @@ describe('GET /api/health', () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('ok');
+  });
+});
+
+describe('GET /api/bookings', () => {
+  it('returns 401 when admin key is missing', async () => {
+    const res = await request(app).get('/api/bookings');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns bookings list with valid admin key', async () => {
+    mockStore.getAllBookings.mockResolvedValue([]);
+    const res = await request(app)
+      .get('/api/bookings')
+      .set('x-admin-key', 'test-admin-key');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
   });
 });
 
@@ -126,20 +145,31 @@ describe('POST /api/bookings — success and conflict', () => {
 });
 
 describe('DELETE /api/bookings/:id', () => {
+  it('returns 401 without admin key', async () => {
+    const res = await request(app).delete('/api/bookings/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
+    expect(res.status).toBe(401);
+  });
+
   it('returns 200 when booking is cancelled', async () => {
     mockStore.cancelBooking.mockResolvedValue(true);
-    const res = await request(app).delete('/api/bookings/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
+    const res = await request(app)
+      .delete('/api/bookings/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')
+      .set('x-admin-key', 'test-admin-key');
     expect(res.status).toBe(200);
   });
 
   it('returns 404 when booking is not found', async () => {
     mockStore.cancelBooking.mockResolvedValue(false);
-    const res = await request(app).delete('/api/bookings/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
+    const res = await request(app)
+      .delete('/api/bookings/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')
+      .set('x-admin-key', 'test-admin-key');
     expect(res.status).toBe(404);
   });
 
   it('returns 400 for an invalid UUID', async () => {
-    const res = await request(app).delete('/api/bookings/not-a-uuid');
+    const res = await request(app)
+      .delete('/api/bookings/not-a-uuid')
+      .set('x-admin-key', 'test-admin-key');
     expect(res.status).toBe(400);
   });
 });

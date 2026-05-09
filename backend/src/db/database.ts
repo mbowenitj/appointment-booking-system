@@ -10,8 +10,10 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // SSL is only needed when connecting to managed cloud providers (Render, Supabase etc.)
   // that explicitly require it. The internal Docker postgres does not use SSL.
+  // Set DB_SSL_REJECT_UNAUTHORIZED=false only when the provider uses a non-standard CA
+  // (e.g. Render free tier). Never disable this in a real production deployment.
   ssl: process.env.DB_SSL === 'true'
-    ? { rejectUnauthorized: false }
+    ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
     : false,
   max: 10,
   idleTimeoutMillis: 30_000,

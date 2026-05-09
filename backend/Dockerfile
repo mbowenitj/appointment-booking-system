@@ -21,16 +21,11 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist         ./dist
 COPY package.json                     ./
 
-# SQLite data directory (mount a volume here in production)
-RUN mkdir -p /data
-VOLUME /data
-ENV DB_DIR=/data
-
 EXPOSE 3001
 
 # Use non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
-    && chown -R appuser:appgroup /app /data
+    && chown -R appuser:appgroup /app
 USER appuser
 
 CMD ["node", "dist/server.js"]
